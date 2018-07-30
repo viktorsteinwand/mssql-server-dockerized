@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+docker-compose run --rm tools /opt/mssql-tools/bin/sqlcmd "$@"

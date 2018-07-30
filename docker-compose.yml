@@ -1,0 +1,22 @@
+
+version: '3.0'
+services:
+
+  mssql:
+    image: microsoft/mssql-server-linux:latest
+    ports:
+      - 1433:1433
+    volumes:
+      - mssql-data:/var/opt/mssql
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: $SA_PASSWORD
+
+  tools:
+    image: mcr.microsoft.com/mssql-tools:latest
+    volumes: 
+      - ./data:/data
+
+volumes:
+  mssql-data:
+    driver: local

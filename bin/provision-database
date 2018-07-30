@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -e
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+PASSWORD=''
+
+while getopts 'p:' flag; do
+  case "${flag}" in
+    p) PASSWORD="${OPTARG}" ;;
+    *) error "Unexpected option ${flag}" ;;
+  esac
+done
+
+if [ "${PASSWORD}" = '' ]; then
+  echo "Usage: $0 -p <SQL-Server SA user password>"
+  exit 1
+fi
+
+echo "Working directory: $(pwd)"
+
+echo "Create new 'Names' database"
+bin/sqlcmd -S mssql -U SA -P ${PASSWORD} -I -Q "DROP DATABASE Names; CREATE DATABASE Names;"
+
+echo "List available databases"
+bin/sqlcmd -S mssql -U SA -P ${PASSWORD} -I -Q "SELECT name FROM master.sys.databases"
+
+echo "Create Names table"
+bin/sqlcmd -S mssql -U SA -P ${PASSWORD} -d Names -I -Q "CREATE TABLE Names(LastName nvarchar(max), FirstName nvarchar(max), FullName nvarchar(max));"
+
+echo "Importing data"
+bin/bcp Names in data/Names.csv -S mssql -U SA -P ${PASSWORD} -d Names -c -t ','
+
+echo "Add uniqueid column"
+bin/sqlcmd -S mssql -U SA -P ${PASSWORD} -d Names -I -Q "ALTER TABLE Names ADD Id UniqueIdentifier DEFAULT newid() NOT NULL;"
+
+echo "Show top 5 entries (Verify data)"
+bin/sqlcmd -S mssql -U SA -P ${PASSWORD} -d Names -I -Q "SELECT TOP(5) * FROM Names;"
+
+echo "Provisioning finished"
